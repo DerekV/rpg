@@ -3,7 +3,7 @@ import Data.Random.Extras (shuffle)
 import Data.Random.Source.DevRandom
 import Data.Random.RVar (runRVar)
 
-data GameState = EnemyHitpoints Int
+data GameState = GameState Int Int;
 
 type Damage = Int
 data Action = Action {
@@ -30,16 +30,18 @@ main :: IO ()
 main = do
   print "Welcome, adventurer."
   print "You have enountered a foul beast!"
-  playGame $ EnemyHitpoints 5
+  playGame $ GameState 5 5
 
 playGame :: GameState -> IO ()
-playGame (EnemyHitpoints enemyHitpoints) = do
+playGame (GameState php mhp) = do
   monsterAction <- head <$> shuffleAndDraw 1 monsterDeck
   print $ "It " ++ show monsterAction ++ "s!"
+  let newPhp = php - damage monsterAction
+  print $ "You have " ++ show newPhp ++ " hitpoints left"
   playerHand <- shuffleAndDraw 1 playerDeck
   print playerHand
-  print $ "The monster has " ++ show enemyHitpoints ++ " hitpoints left"
+  print $ "The monster has " ++ show mhp ++ " hitpoints left"
   getLine
-  if (enemyHitpoints > 0)
-    then playGame $ EnemyHitpoints (enemyHitpoints - damage (head playerHand));
+  if (mhp > 0)
+    then playGame $ GameState (damage (head playerHand)) newPhp;
     else print "You have defeated the monster!  Good bye, mighty hero"
