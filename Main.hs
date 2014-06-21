@@ -5,12 +5,19 @@ import Data.Random.Source.DevRandom
 --import Data.Random.Internal
 import Data.Random.RVar (runRVar)
 
+data GameState = EnemyHitpoints Int
+
 shuffleAndDraw :: Int -> [a] -> IO [a]
 shuffleAndDraw n deck = runRVar ((take n) <$>  shuffle deck) DevURandom
 
 main :: IO b
 main = do
-  hand <- shuffleAndDraw 3 ["poke", "bite", "slap", "trip", "claw", "punch", "kick", "taunt"]
+  playGame $ EnemyHitpoints 5
+
+playGame :: GameState -> IO b
+playGame (EnemyHitpoints enemyHitpoints) = do
+  hand <- shuffleAndDraw 1 ["poke", "bite", "slap", "trip", "claw", "punch", "kick", "taunt"]
   print hand
+  print $ "The monster has " ++ show enemyHitpoints ++ " hitpoints left"
   getLine
-  main
+  playGame $ EnemyHitpoints (enemyHitpoints - 1);
