@@ -4,7 +4,7 @@ import Data.Random.Extras (shuffle)
 import Data.Random.Source.DevRandom
 import Data.Random.RVar (runRVar)
 
-data GameState = GameState Int Int;
+data GameState = GameState {playerHp :: Int, monsterHp :: Int};
 
 type Damage = Int
 data Action = Action {
@@ -34,21 +34,35 @@ main = do
   playGame $ GameState 5 5
 
 playGame :: GameState -> IO ()
-playGame (GameState php mhp) = do
+playGame initialState = do
   getLine
+  afterMonsterGoes <- monsterTurn initialState
+  when (playerHp initialState > playerHp afterMonsterGoes) $
+    printPlayerStatus afterMonsterGoes
+  if (playerHp afterMonsterGoes <= 0) then
+    putStrLn "You are dead and soon forgotten."
+    else do
+      newState <- playerTurn afterMonsterGoes
+      if (monsterHp newState <= 0)
+        then putStrLn "You have defeated the monster!  Good bye, mighty hero"
+        else playGame newState
+
+monsterTurn :: GameState -> IO(GameState)
+monsterTurn (GameState php mhp) = do
   monsterAction <- head <$> shuffleAndDraw 1 monsterDeck
   putStrLn $ "It " ++ show monsterAction ++ "s!"
   let newPhp = php - damage monsterAction
-  when (damage monsterAction > 0) $
-    putStrLn $ "You have " ++ show newPhp ++ " hitpoints left"
-  if (newPhp <= 0) then
-    putStrLn "You are dead and soon forgotten."
-    else
-    do
-      playerAction <- head <$> shuffleAndDraw 1 playerDeck
-      putStrLn $ "You " ++ (show playerAction) ++ " the monster."
-      let newMhp = mhp - damage playerAction
-      putStrLn $ "The monster has " ++ show newMhp ++ " hitpoints left."
-      if (newMhp <= 0)
-        then putStrLn "You have defeated the monster!  Good bye, mighty hero"
-        else playGame $ GameState newPhp newMhp
+  return (GameState newPhp mhp)
+
+playerTurn :: GameState -> IO(GameState)
+playerTurn (GameState php mhp) = do
+  playerAction <- head <$> shuffleAndDraw 1 playerDeck
+  putStrLn $ "You " ++ (show playerAction) ++ " the monster."
+  let newMhp = mhp - damage playerAction
+  putStrLn $ "The monster has " ++ show newMhp ++ " hitpoints left."
+  return (GameState php newMhp)
+
+printPlayerStatus :: GameState -> IO()
+printPlayerStatus state = do
+  putStrLn $ "You have " ++ show hp ++ " hitpoints left"
+  where hp = playerHp state
