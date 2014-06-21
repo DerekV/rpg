@@ -35,6 +35,7 @@ main = do
 
 playGame :: GameState -> IO ()
 playGame (GameState php mhp) = do
+  getLine
   monsterAction <- head <$> shuffleAndDraw 1 monsterDeck
   putStrLn $ "It " ++ show monsterAction ++ "s!"
   let newPhp = php - damage monsterAction
@@ -42,11 +43,12 @@ playGame (GameState php mhp) = do
     putStrLn $ "You have " ++ show newPhp ++ " hitpoints left"
   if (newPhp <= 0) then
     putStrLn "You are dead and soon forgotten."
-    else do
-    playerAction <- head <$> shuffleAndDraw 1 playerDeck
-    putStrLn $ "You " ++ (show playerAction) ++ " the monster."
-    putStrLn $ "The monster has " ++ show mhp ++ " hitpoints left."
-    getLine
-    if (mhp > 0)
-      then playGame $ GameState (damage playerAction) newPhp
-      else putStrLn "You have defeated the monster!  Good bye, mighty hero"
+    else
+    do
+      playerAction <- head <$> shuffleAndDraw 1 playerDeck
+      putStrLn $ "You " ++ (show playerAction) ++ " the monster."
+      let newMhp = mhp - damage playerAction
+      putStrLn $ "The monster has " ++ show newMhp ++ " hitpoints left."
+      if (newMhp <= 0)
+        then putStrLn "You have defeated the monster!  Good bye, mighty hero"
+        else playGame $ GameState newPhp newMhp
