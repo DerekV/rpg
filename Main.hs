@@ -1,3 +1,4 @@
+import Control.Monad
 import Data.Functor
 import Data.Random.Extras (shuffle)
 import Data.Random.Source.DevRandom
@@ -28,23 +29,24 @@ monsterDeck = [Action "gurgle" 0, Action "bite" 2, Action "pounce" 2,
 
 main :: IO ()
 main = do
-  print "Welcome, adventurer."
-  print "You have enountered a foul beast!"
+  putStrLn "Welcome, adventurer."
+  putStrLn "You have enountered a foul beast!"
   playGame $ GameState 5 5
 
 playGame :: GameState -> IO ()
 playGame (GameState php mhp) = do
   monsterAction <- head <$> shuffleAndDraw 1 monsterDeck
-  print $ "It " ++ show monsterAction ++ "s!"
+  putStrLn $ "It " ++ show monsterAction ++ "s!"
   let newPhp = php - damage monsterAction
-  print $ "You have " ++ show newPhp ++ " hitpoints left"
-  if (php <= 0) then
-    print "You are dead and soon forgotten."
+  when (damage monsterAction > 0) $
+    putStrLn $ "You have " ++ show newPhp ++ " hitpoints left"
+  if (newPhp <= 0) then
+    putStrLn "You are dead and soon forgotten."
     else do
-    playerHand <- shuffleAndDraw 1 playerDeck
-    print playerHand
-    print $ "The monster has " ++ show mhp ++ " hitpoints left"
+    playerAction <- head <$> shuffleAndDraw 1 playerDeck
+    putStrLn $ "You " ++ (show playerAction) ++ " the monster."
+    putStrLn $ "The monster has " ++ show mhp ++ " hitpoints left."
     getLine
     if (mhp > 0)
-      then playGame $ GameState (damage (head playerHand)) newPhp
-      else print "You have defeated the monster!  Good bye, mighty hero"
+      then playGame $ GameState (damage playerAction) newPhp
+      else putStrLn "You have defeated the monster!  Good bye, mighty hero"
