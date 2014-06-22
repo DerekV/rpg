@@ -1,12 +1,13 @@
-import Control.Monad hiding (mapM_)
+import Control.Monad
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Functor
-import Data.Foldable (any, mapM_)
-import Data.Sequence as Sq (Seq, length, fromList, index, update)
+import qualified Data.Foldable as Fld ( mapM_ )
+import qualified Data.Traversable as Trv ( mapM )
+import Data.Sequence as Sq (Seq, fromList, index, update, null, filter, length)
 import Data.Random.Extras (shuffle)
 import Data.Random.Source.DevRandom
 import Data.Random.RVar (runRVar)
-
 
 type Damage = Int
 data Action = Action {
@@ -39,7 +40,6 @@ monster = Character { name="MonsterBeast",
 
 data Game = Game { characters :: Seq Character, turn :: Int }
 
-
 type ActionDeck = [Action]
 
 playerDeck :: ActionDeck
@@ -61,18 +61,28 @@ playGame startOfTurn = do
   tellStartTurn startOfTurn
   afterThisTurn <- doTurn startOfTurn
   tellTurnEndResults startOfTurn afterThisTurn
-  if (gameOver afterThisTurn)
-    then return()
+  (gameIsOver,reasons) <- runWriterT $ checkGameOverRules afterThisTurn
+  if gameIsOver
+    then mapM_ (putStrLn) reasons
     else playGame (nextTurn afterThisTurn)
 
-gameOver :: Game -> Bool
-gameOver game = Data.Foldable.any (\c -> hpCurrently c <= 0 ) (characters game)
+checkGameOverRules :: Game -> WriterT [String] IO Bool
+checkGameOverRules game = do
+  Trv.mapM (obituate) deadCharacters
+  return $ not $ Sq.null deadCharacters
+  where
+    characterIsDead character = hpCurrently character <= 0
+    deadCharacters = Sq.filter characterIsDead (characters game)
+
+obituate :: Character -> WriterT [String] IO ()
+obituate character = do
+  tell $ [  name character ++ " has died." ]
 
 nextTurn :: Game -> Game
 nextTurn game = game { turn=mod (1 + turn game) (Sq.length $ characters game)}
 
 getTurnTaker :: Game -> Character
-getTurnTaker game = index (characters game) (turn game)
+getTurnTaker game = Sq.index (characters game) (turn game)
 
 tellStartTurn :: Game -> IO()
 tellStartTurn game = do
@@ -83,7 +93,7 @@ tellTurnEndResults :: Game -> Game -> IO ()
 tellTurnEndResults start end = do
   let character = getTurnTaker start
   putStrLn $ (name character) ++ "'s turn ends";
-  Data.Foldable.mapM_ (tellHpRemaining) (characters end)
+  Fld.mapM_ (tellHpRemaining) (characters end)
   putStrLn ""
   return ()
 
