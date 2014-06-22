@@ -22,7 +22,9 @@ executable newrpg
   build-depends:       base >=4.6 && <4.7, 
                        random-extras, 
                        random-source, 
-                       random-fu
+                       random-fu,
+                       mtl,
+                       containers
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options:         -fno-warn-missing-signatures
