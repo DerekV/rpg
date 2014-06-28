@@ -14,7 +14,7 @@ data Action = Action {
   verb::String,
   damage::Damage}
 instance Show Action where
-  show action = verb action
+  show = verb
 
 
 shuffleAndDraw :: Int -> [Action] -> IO [Action]
@@ -33,6 +33,8 @@ player = Character { name="Player",
                      hpCurrently=5,
                      hpTotal=5,
                      ioAction=(getLine>>randomAction playerDeck)}
+
+monster :: Character
 monster = Character { name="MonsterBeast",
                       hpCurrently=5,
                       hpTotal=5,
@@ -43,8 +45,9 @@ data Game = Game { characters :: Seq Character, turn :: Int }
 type ActionDeck = [Action]
 
 playerDeck :: ActionDeck
-playerDeck = [Action "poke" 1, Action "stab" 3, Action "slap" 1, Action "trip" 1,
-              Action "claw" 1, Action "punch" 2, Action "kick" 3, Action "taunt" 0]
+playerDeck = [Action "poke" 1, Action "stab" 3, Action "slap" 1,
+              Action "trip" 1, Action "claw" 1, Action "punch" 2,
+              Action "kick" 3, Action "taunt" 0]
 
 monsterDeck :: ActionDeck
 monsterDeck = [Action "gurgle" 0, Action "bite" 2, Action "pounce" 2,
