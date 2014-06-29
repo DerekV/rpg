@@ -1,6 +1,7 @@
 import Control.Monad
 import Control.Monad.Writer
 import Data.Functor
+import Data.List
 import qualified Data.Foldable as Fld ( mapM_ )
 import qualified Data.Traversable as Trv ( mapM )
 import Data.Random.Extras (shuffle)
@@ -34,7 +35,7 @@ player :: Character
 player = Character { name="Player",
                      hpCurrently=5,
                      hpTotal=5,
-                     ioAction=(\options -> (getLine>>randomAction options)),
+                     ioAction=letPlayerChooseAction,
                      standardDeck=playerDeck}
 
 monster :: Character
@@ -43,6 +44,16 @@ monster = Character { name="MonsterBeast",
                       hpTotal=5,
                       ioAction=(\options -> randomAction options),
                       standardDeck=monsterDeck}
+
+letPlayerChooseAction :: ActionDeck -> IO Action
+letPlayerChooseAction deck = do
+  putStrLn $ "Your options are: " ++ intercalate ", " (map show deck)
+  input <- getLine
+  case find (\x -> input == verb x) deck of
+    Just act -> return act
+    Nothing -> do
+      putStrLn $ "Not an action : " ++ input
+      letPlayerChooseAction deck
 
 type GameEndReason = String
 
